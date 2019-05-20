@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.4" 
+	xmlns="http://java.sun.com/xml/ns/j2ee" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee 
+	http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" id="WebApp_1558248959293">
+  <servlet id="Servlet_1558249098111">
+    <description>This is the description of my J2EE component</description>
+    <display-name>This is the display name of my J2EE component</display-name>
+    <servlet-name>AdminLoginCheck</servlet-name>
+    <servlet-class>servlet.AdminLoginCheck</servlet-class>
+  </servlet>
+  <servlet id="Servlet_1558249098126">
+    <description>This is the description of my J2EE component</description>
+    <display-name>This is the display name of my J2EE component</display-name>
+    <servlet-name>TeacherAddServlet</servlet-name>
+    <servlet-class>servlet.TeacherAddServlet</servlet-class>
+  </servlet>
+  <servlet id="Servlet_1558249098251">
+    <description>This is the description of my J2EE component</description>
+    <display-name>This is the display name of my J2EE component</display-name>
+    <servlet-name>PasswordModiServlet</servlet-name>
+    <servlet-class>servlet.PasswordModiServlet</servlet-class>
+  </servlet>
+  <servlet id="Servlet_1558249098267">
+    <description>This is the description of my J2EE component</description>
+    <display-name>This is the display name of my J2EE component</display-name>
+    <servlet-name>TeacherModiServlet</servlet-name>
+    <servlet-class>servlet.TeacherModiServlet</servlet-class>
+  </servlet>
+
+
+
+
+
+
+
+
+  <servlet-mapping id="ServletMapping_1558249097736">
+    <servlet-name>AdminLoginCheck</servlet-name>
+    <url-pattern>/servlet/AdminLoginCheck</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping id="ServletMapping_1558249097830">
+    <servlet-name>TeacherAddServlet</servlet-name>
+    <url-pattern>/servlet/TeacherAddServlet</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping id="ServletMapping_1558249098064">
+    <servlet-name>PasswordModiServlet</servlet-name>
+    <url-pattern>/servlet/PasswordModiServlet</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping id="ServletMapping_1558249098095">
+    <servlet-name>TeacherModiServlet</servlet-name>
+    <url-pattern>/servlet/TeacherModiServlet</url-pattern>
+  </servlet-mapping>
+  <welcome-file-list>
+    <welcome-file>index.jsp</welcome-file>
+  </welcome-file-list>
+</web-app>
