@@ -198,6 +198,112 @@ from ( select course_id
 　　　where instructor.`name`='Crick')as T natural join (select name, course_id  
 　　　　　　　　　　　　　　　　　　　　　　　　from takes natural join student) as S;
 
+# 作业四
+### 1、查询获得的总学分（tot_cred）比Comp. Sci.系每位学生的总学分都高的学生信息，显示学号、姓名、系别、总学分。
+ID|name|dept_name|tot_cred
+> select *  
+from student  
+where tot_cred > all(select tot_cred from student where dept_name = 'Comp. Sci.');
+
+### 2、查询选修课程的数量与“Zhang”一样多的学生的学号、姓名、系别。
+ID|name|dept_name
+> select S.ID,S.name,S.dept_name  
+from student as S  
+where S.ID in ( select T.ID  
+　　　　　　　from takes as T  
+　　　　　　　group by T.ID  
+　　　　　　　having count(*) in (select count(*)  
+　　　　　　　　　　　　　　　from student natural join takes  
+　　　　　　　　　　　　　　　where name = 'Zhang'  
+　　　　　　　　　　　　　　　group by name)) and S.name != 'Zhang';
+### 3、查询选修了Comp. Sci.系开设的全部课程的学生姓名（注：为验证查询正确性，你可能需要自己往数据库表中添加一些测试数据）
+name
+> select name  
+from student  
+where not exists( select *  
+　　　　　　　　from course  
+　　　　　　　　where dept_name='Comp. Sci.'  
+　　　　　　　　and not exists( select *  
+　　　　　　　　　　　　　　　from takes  
+　　　　　　　　　　　　　　　where takes.ID = student.ID and takes.course_id = course.course_id));
+===================================================================  
+以下实验需要建立grade_points表，提供字母表示的成绩到绩点的对应关系，执行如下语句：   
+CREATE TABLE `grade_points` (  
+  `grade` varchar(2) NOT NULL,  
+  `points` decimal(5,1) DEFAULT NULL,  
+  PRIMARY KEY (`grade`)  
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;  
+INSERT INTO `grade_points` VALUES ('A', '4.0');  
+INSERT INTO `grade_points` VALUES ('A-', '3.7');  
+INSERT INTO `grade_points` VALUES ('B', '3.0');  
+INSERT INTO `grade_points` VALUES ('B+', '3.3');  
+INSERT INTO `grade_points` VALUES ('B-', '2.7');  
+INSERT INTO `grade_points` VALUES ('C', '2.0');  
+INSERT INTO `grade_points` VALUES ('C+', '2.3');  
+INSERT INTO `grade_points` VALUES ('C-', '1.5');  
+INSERT INTO `grade_points` VALUES ('D', '1.3');  
+INSERT INTO `grade_points` VALUES ('D-', '1.0');  
+INSERT INTO `grade_points` VALUES ('F', '0.0');  
+
+### 4、根据ID为12345的学生所修的所有课程，计算该生的加权平均绩点（加权平均绩点=各科成绩对应绩点*各科学分/各科学分总和），保留2位小数点（使用convert，下同）。
+ID|avg_points
+> select ID, convert(sum(points * credits) / sum(credits), decimal(5,2)) as avg_points  
+from takes natural join grade_points natural join course  
+where ID = 12345  
+group by ID;  
+
+### 5、列出每个学生的加权平均绩点，按从高到底排列，显示学号、姓名、加权平均绩点，保留2位小数点，按加权平均绩点逆序排列。
+ID|name|avg_points
+> select ID, name, convert(sum(points * credits) / sum(credits), decimal(5,2)) as avg_points  
+from takes natural join grade_points natural join course natural join student  
+group by ID  
+order by avg_points desc;
+
+### 6、列出每个课程在每学年、每学期、每个课程段的学生平均绩点，保留2位小数点，按平均绩点逆序排列。
+course_id|sec_id|semester|year|course_ave_points
+> select course_id, sec_id, semester, year, convert(sum(points * credits) / sum(credits), decimal(5,2)) as course_ave_points  
+from takes natural join grade_points natural join course  
+group by course_id, year, semester,sec_id  
+order by course_ave_points desc;
+
+=======================================================  
+以下实验需要建立test_rollup表，执行如下语句：  
+CREATE TABLE `test_rollup` (  
+  `orderid` int(11) NOT NULL,  
+  `orderdate` date NOT NULL,  
+  `empid` int(11) NOT NULL,  
+  `custid` varchar(10) NOT NULL,  
+  `qty` int(11) NOT NULL,  
+  PRIMARY KEY (`orderid`,`orderdate`)  
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;   
+INSERT INTO `test_rollup` VALUES ('1', '2017-01-02', '3', 'A', '10');  
+INSERT INTO `test_rollup` VALUES ('2', '2018-04-02', '2', 'B', '20');  
+INSERT INTO `test_rollup` VALUES ('3', '2018-05-02', '1', 'A', '30');  
+INSERT INTO `test_rollup` VALUES ('4', '2018-07-02', '3', 'D', '40');  
+INSERT INTO `test_rollup` VALUES ('5', '2018-01-02', '4', 'A', '20');  
+INSERT INTO `test_rollup` VALUES ('6', '2018-01-02', '3', 'B', '30');  
+INSERT INTO `test_rollup` VALUES ('7', '2018-01-02', '1', 'C', '40');  
+INSERT INTO `test_rollup` VALUES ('8', '2018-01-02', '2', 'A', '10');  
+INSERT INTO `test_rollup` VALUES ('9', '2018-01-02', '3', 'B', '20');  
+
+各个字段说明如下：  
+orderid--销售流水号  
+orderdate--销售日期  
+empid--销售员编号  
+custid--顾客编号  
+qty--购买数量  
+### 7、使用rollup查询各个年度（命名为year）的销售总额（命名为sum）
+year|sum  
+> select YEAR(orderdate) as year, sum(qty) as sum  
+from test_rollup  
+group by year  
+with rollup;  
+
+### 8、使用rollup统计各个销售员、各个顾客、各个年份的销售总数
+> select empid, custid, YEAR(orderdate) as year, sum(qty) as sum  
+from test_rollup  
+group by empid, custid, year  
+with rollup;  
 
 
 
