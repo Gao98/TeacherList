@@ -305,6 +305,64 @@ from test_rollup
 group by empid, custid, year  
 with rollup;  
 
+# 作业五
+### 1、创建一个视图，要求可替换已有同名视图，内容为name，title，grade，视图名为学生成绩，查询表为student，takes，course。在视图创建完成后，利用该视图查询name为Zhang的学生成绩。
+> create or replace view 学生成绩 (name, title, grade)  
+as select name, title, grade  
+from student natural join takes natural join course;
+
+>select * from 学生成绩 where name = 'Zhang';
+### 2、创建一个视图，要求可替换已有同名试图，内容为ID，name，salary，视图名为“导师”，查询表为instructor，salary > 80000，要求向视图中插入数据时，salary必须均>80000。创建完视图后，分别插入如下两则数据，并查看instructor表和视图中相应变化。
+（ID=12345，name=Zhang，salary=79999）  
+（ID=23456，name=Zhang，salary=89999）
+> create or replace view 导师 (ID, name, salary)  
+as select ID, name, salary  
+from instructor  
+where salary > 80000  
+with check option;
+
+> insert into 导师 values(12345, 'Zhang', 79999);
+
+> insert into 导师 values(23456, 'Zhang', 89999);
+
+### 3、在takes表上定义一个BEFORE INSERT触发器，触发器名为“setnull”。当插入一条记录时，假设所插入的分数的值为' '（空格）则表明该分数发生缺失，所以定义此触发器在分数值条件满足时触发使用null值来代替' '。
+> create trigger setnull before insert  
+on takes for each row  
+begin  
+if(new.grade=' ')then  
+set new.grade = null;  
+end if;  
+end;
+
+### 4、在classroom表上创建BEFORE UPDATE触发器，创建名为“classroom_update_before_trigger”触发器，负责对classroom表的进行UPDATE修改检查，要求修改表中capacity的值小于10或大于500的，均保持原值不变。
+> create trigger classroom_update_before_trigger before update  
+on classroom for each row  
+begin  
+if(new.capacity < 10 || new.capacity > 500)then  
+set new.capacity = old.capacity;  
+end if;  
+end;  
+
+### 5、 在takes表上定义一个AFTER UPDATE触发器，触发器名为“credit_get”，当takes表中元组的属性grade被更新时，使得学生获得的总学分（学生表的tot_cred属性）更新。只有当属性grade从空值或者’F’被更新为代表课程已经完成的具体分数时，（具体分数是A-C-）触发器才会被激发。
+> create trigger credit_get after update  
+on takes for each row  
+begin  
+if(new.grade != 'F' and new.grade != '' and (old.grade = 'F' or new.grade = '' ))then  
+update student  
+set tot_cred = tot_cred + (select credits from course where course.course_id = new.course_id)  
+where student.ID = new.ID;  
+end if;  
+end;
+
+### 6、在section表上定义一个AFTER INSERT触发器，触发器名为“timeslot_check”，当对课程section表执行任何插入操作后触发器被启动，以确保插入元组的time_slot_id属性即上课时间段必须存在于time_slot表中。
+> create trigger timeslot_check after insert  
+on section for each row  
+begin  
+if(new.time_slot_id not in (select time_slot_id from time_slot))then  
+delete from section  
+where time_slot_id = new.time_slot_id;  
+end if;  
+end;
 
 
 
