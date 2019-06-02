@@ -448,5 +448,205 @@ while i <= 100 do
 end while;  
 end;  
 
+# 作业七
+### 1、建立函数getPrereq_id，实现用迭代输出某个课程（作为函数输入）的所有先修课程号（包含本课程的课程号），用‘|’隔开。输入以下两条指令以查看效果。
+INSERT INTO prereq VALUES('BIO-101', 'PHY-101');  
+SELECT getPrereq_id('BIO-399');
+> create function getPrereq_id(id varchar(20)) returns varchar(255)  
+begin  
+　　declare now_course varchar(20) default "";  
+　　declare prereq_course varchar(20) default "";  
+　　declare return_str varchar(255) default "";        
+　　set now_course=id;  
+　　set return_str=now_course;  
+　　while now_course!=prereq_course do  
+　　　　set prereq_course=now_course;  
+　　　　select prereq_id into now_course from prereq where course_id=now_course;  
+　　　　if now_course!=prereq_course then set return_str=concat(return_str,'|',now_course);  
+　　　　end if;  
+　　end while;  	
+　　return return_str;  
+end;
 
+### 2、在university数据库中执行脚本filesystem.sql，建立表filesystem并导入测试数据，建立函数getFullpath，实现用迭代输出该路径下的完整路径。输入以下指令以查看效果。
+SELECT getFullpath('bin/');
+> create function getFullpath(dir varchar(20)) returns varchar(255)  
+begin  
+　　declare now_dir varchar(20) default "";  
+　　declare last_dir varchar(20) default "";  
+　　declare return_str varchar(255) default "";          
+　　set now_dir=dir;  
+　　set return_str=now_dir;  
+　　while now_dir!=last_dir do  
+　　　　set last_dir=now_dir;  
+　　　　select ParName into now_dir from filesystem where DirName=now_dir limit 1;  
+　　　　if now_dir!=last_dir then set return_str=concat(now_dir,return_str);  
+　　　　end if;  
+　　end while;  
+　　return return_str;  
+end;
+
+### 3、请创建一个存储过程sp_updatesalary()，利用游标完成如下操作：为工资小于70000的老师增加20%收入，工资大于等于70000的老师增加15%的收入。
+> create procedure sp_updatesalary()  
+begin  
+　　declare a varchar(5);  
+　　declare b varchar(20);  
+　　declare c varchar(20);  
+　　declare d decimal(8,2);  
+　　declare e decimal(8,2);  
+　　declare cur1 cursor for select ID, name, dept_name, salary from instructor;  
+　　declare exit handler for not found close cur1;  
+　　open cur1;  
+　　repeat  
+　　　　fetch cur1 into a,b,c,d;  
+　　　　if d < 70000 then update instructor set salary = salary * 1.2 where ID = a;  
+　　　　else update instructor set salary = salary * 1.15 where ID = a;  
+　　　　end if;  
+　　until 0 end repeat;  
+　　close cur1;  
+end;
+
+# 作业八
+## 1、编写存储过程pr_budget，使用事务在表department上将一个系的budget转账到另外一个系的budget中。三个输入参数依次为：withdrawDept代表转出金额系的系名，depositDept代表转入金额系的系名，money代表转账金额。显示转账成功与否，1为失败，0为成功。
+注：先将department表上的budget字段设置成无符号数，自行调用存储过程验证转账成功和失败。
+
+
+
+## 2、MySQL隔离级别验证实验
+1）将instructor表中编号12121的名为Wu的教工的salary设置为10000元
+
+2）同时开两个命令行界面，称为A和B，在A、B两个窗口都执行下面的语句，设定隔离级别为“读未提交”。  
+set tx_isolation='read-uncommitted';  
+可以执行select @@session.tx_isolation;验证设定是否已经成功。  
+
+3）在A窗口执行如下语句：  
+begin;  
+select * from instructor;  
+可以看到所有教工的信息，编号12121的名为Wu的教工的salary当前值应该为10000  
+
+4）在B窗口执行如下语句：  
+begin;
+update instructor set salary = salary - 500 where id= 12121;  
+select * from instructor;  
+
+
+5）在A窗口执行如下语句：  
+select * from instructor;  
+请回答：  
+Q1：是否可以看到编号12121的名为Wu的教工的salary值被B窗口修改但未提交的结果，回答是/否。  
+A1：
+Q2：这种现象的名称是？  
+A2：
+
+6）在B窗口执行如下语句：
+rollback;
+
+7）在A窗口执行如下语句：
+update instructor set salary = salary - 500 where id= 12121;
+select * from instructor;
+Q：当前编号12121的名为Wu的教工的salary值为多少？
+A：
+
+8）在A窗口执行如下语句：
+rollback;
+select * from instructor;
+
+9）在A、B两个窗口都执行下面的语句，设定隔离级别为“读已提交”。
+set tx_isolation='read-committed';
+可以执行select @@session.tx_isolation;验证设定是否已经成功。
+
+10）在A窗口执行下面语句：
+begin;
+select * from instructor;
+
+11）在B窗口执行下面语句：
+begin;
+select * from instructor;
+update instructor set salary = salary - 500 where id= 12121;
+
+12）在A窗口执行如下语句：
+select * from instructor;
+请回答：
+Q1：当前编号12121的名为Wu的教工的salary值为多少？
+A1：
+Q2：是否可以看到编号12121的名为Wu的教工的salary值被B窗口修改但未提交的结果，回答是/否
+A2：
+
+13）在B窗口执行下面语句：
+commit;
+select * from instructor;
+
+14）在A窗口执行如下语句：
+select * from instructor;
+commit;
+请回答：
+Q1：当前编号12121的名为Wu的教工的salary值为多少？
+A1：
+Q2：是否可以看到编号12121的名为Wu的教工的salary值被B窗口修改并已提交的结果，回答是/否
+A2：
+Q3：A窗口当前两次的select * from instructor;查询结果是否一致？
+A3：
+Q4：这种现象的名称是？
+A4：
+
+15）在A、B两个窗口都执行下面的语句，设定隔离级别为“可重复读”。
+set tx_isolation='repeatable-read';
+可以执行select @@session.tx_isolation;验证设定是否已经成功。
+
+16）在A窗口执行下面语句：
+begin;
+select * from instructor;
+
+16）在B窗口执行下面语句：
+begin;
+select * from instructor;
+update instructor set salary = salary - 500 where id= 12121;
+commit;
+select * from instructor;
+
+17）在A窗口执行如下语句：
+select * from instructor;
+Q1：当前编号12121的名为Wu的教工的salary值为多少？
+A1：
+Q2：是否可以看到编号12121的名为Wu的教工的salary值被B窗口修改并已提交的结果，回答是/否
+A2：
+Q3：A窗口当前两次的select * from instructor;查询结果是否一致？
+A3：
+
+18）在A窗口执行如下语句：
+update instructor set salary = salary - 500 where id= 12121;
+commit;
+select * from instructor;
+Q1：当前编号12121的名为Wu的教工的salary值为多少？
+A1：
+
+
+19）在A窗口执行如下语句：
+begin;
+select * from instructor;
+
+20)在B窗口执行下面语句：
+begin;
+insert into instructor values(99999,'test','Comp. Sci.',10000);
+commit;
+select * from instructor;
+
+21）在A窗口执行如下语句：
+select * from instructor;
+Q1：是否可以看到B窗口新插入并已提交的结果，回答是/否
+A1：
+
+22）在A窗口执行如下语句：
+insert into instructor values(99999,'test','Comp. Sci.',10000);
+Q1：A窗口是否能插入此条数据，回答是/否
+A1：
+Q2：这种现象的名称是？
+A2：
+
+23）在A窗口执行如下语句：
+update instructor set salary = 6666 where id=99999;
+select * from instructor;
+commit;
+Q1：A窗口是否更新了一条自己会话中查不到的数据，回答是/否
+A1：
 
