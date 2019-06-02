@@ -664,3 +664,26 @@ commit;
 Q1：A窗口是否更新了一条自己会话中查不到的数据，回答是/否
 ### A1：是
 
+# 作业九
+### a)	查询学生信息表中所有学生信息，按照年龄升序排列
+> select * from student order by BIRTHDAY desc;
+
+### b)	查询课程信息表中课程的总数
+> select count(CNO) from course;
+
+### c)	查询课程信息表中剩余开课人数小于等于10的课程详细信息
+> select * from course where LEFT_NUM <= 10;
+
+### d)	查询课程信息表中课程编号为2014开头的课程详细信息
+> select * from course where CNO like '2014%';
+
+### e)	查询选修课程号为20140002的学生的学号与姓名
+> select SNO, SNAME from sc natural join student where CNO = '20140002';
+
+### f)	查询选修课程名为独孤九剑的学生姓名、年龄、课程名称、课程成绩
+> select SNAME, AGE, CNAME, GRADE from student natural join sc natural join course where CNAME = '独孤九剑';
+
+### g)	查询计算机与软件学院学生姓名为令狐冲的学生姓名、年龄、性别、出生日期、年龄、学院名、课程名称、课程成绩
+> select SNAME, AGE, SEX, BIRTHDAY, DNAME, CNAME, GRADE  
+from dept natural join student natural join sc natural join course   
+where DNAME = '计算机与软件学院' and SNAME = '令狐冲';
