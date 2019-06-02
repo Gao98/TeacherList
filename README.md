@@ -364,5 +364,89 @@ where time_slot_id = new.time_slot_id;
 end if;  
 end;
 
+# 作业六
+### 1、编写存储过程pr_course_avgPoints,列出每个课程在每学年、每学期、每个课程段的平均绩点，保留2位小数点，按平均绩点逆序排列,显示课程名、课程段、学期、年份、平均绩点。
+title|sec_id|semester|year|course_avg_point
+> create procedure pr_course_avgPoints()  
+begin  
+select title, sec_id,semester, year, round(avg(points), 2) as course_avg_point  
+from course natural join takes natural join grade_points  
+group by title, sec_id, semester, year  
+order by avg(points) desc;  
+end;
+
+### 2、编写存储过程pr_high_budget,输出预算费高于80000元的系信息，显示系名、所在楼宇名，预算费以参数的形式输入。写出创建和运行存储过程的语句。
+dept_name|building|budget
+> create procedure pr_high_budget(in parameter int)  
+begin  
+select dept_name, building, budget  
+from department  
+where budget > parameter;  
+end;  
+
+> call pr_high_budget(80000);  
+
+### 3、编写存储过程pr_hot_course,输出某年度选课人数最多的课程人数，年度作为输入参数，人数作为输出参数。写出创建和运行存储过程的语句。
+> create procedure pr_hot_course(in in_year int,out out_count int)  
+begin  
+select count(course_id) into out_count  
+from takes  
+where year = in_year  
+group by course_id  
+having count(course_id) >= all  
+(select count(course_id)  
+from takes  
+where year = in_year  
+group by course_id);  
+end;  
+
+> call pr_hot_course(2009, @out_count);
+
+### 4、编写函数func_rand_str，可随机生成长度为n（n<=255）的字符串，字符串中符号可包括a-z、A-Z、0-9,n作为输入参数。
+> create function func_rand_str(n int) returns varchar(255)  
+begin  
+declare symbol varchar(62) default "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";   
+declare result varchar(255) default "";  
+declare i int default 0;  
+while i < n do    
+　　set result = CONCAT(result, SUBSTRING(symbol, FLOOR(1+RAND()*62), 1));  
+　　set i = i + 1;  
+end while;  
+return result;  
+end;
+
+### 5、编写函数func_rand_telnum，可随机生成长度为11为的手机号，开头为130 131 132 133 134 135 136 137 138 139 186 187 189 151 157。
+> create function func_rand_telnum() returns varchar(11)  
+begin  
+declare head char(3);  
+declare heads varchar(60) default "130 131 132 133 134 135 136 137 138 139 186 187 189 151 157";  
+declare pos int;  
+declare digit varchar(10) default "0123456789";  
+declare tail varchar(255) default "";  
+declare result varchar(11);  
+declare i int default 0;  
+set pos = 1 + FLOOR(RAND() * 15) * 4;      
+set head = trim(substring(heads, pos, 3));  
+while i < 8 do  
+　　set tail = CONCAT(tail, substring(digit, FLOOR(1 + RAND() * 10), 1));  
+　　set i = i +1;  
+end while;  
+set result = trim(concat(head, tail));  
+return result;  
+end;
+
+### 6、编写存储过程pr_inset_testCases，往test_user表中插入100条测试数据，其中username是函数func_rand_str生成的长度为8的字符串，telephone由函数func_rand_telnum生成，birthday为当前插入日期随机减去20-40年，sex均为M。请先去掉telphone的Unique约束。
+> create procedure pr_inset_testCases()  
+begin  
+declare i int default 1;  
+declare j int;  
+alter table test_user drop index phone_unique;  
+while i <= 100 do  
+　　set j = FLOOR(20 + RAND()*21);  
+　　insert into test_user(id, username, sex, telephone, birthday) values (i, func_rand_str(8), "M", func_rand_telnum(), DATE_SUB(NOW(), INTERVAL j year));  
+　　set i = i + 1;  
+end while;  
+end;  
+
 
 
