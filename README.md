@@ -32,7 +32,9 @@ where building not in (select building
 　　　　　　　　　　where building = 'Watson');  
 ### （5）查询部门表（department）中所有预算（budget）在[80000，100000]的记录（两种方法，要求将查询结果的表头显示为中文）。
 部门名|教学楼|预算
-> select dept_name as 部门名, building as 教学楼, budget as 预算 from department where budget >= 80000 and budget <= 100000;
+> select dept_name as 部门名, building as 教学楼, budget as 预算 　
+from department 　
+where budget >= 80000 and budget <= 100000;
 
 > select dept_name as 部门名, building as 教学楼, budget as 预算  
 from department  
@@ -130,7 +132,71 @@ having count(ID)>=all(select count(ID)
 　　　　　　　　　　　　　　　　　　　group by course_id  
 　　　　　　　　　　　　　　　　　　　having count(ID));
 
+# 作业三
+### （1）查询教师表(instructor)中存在的同一学期(年份和学期均需相等)教授(teaches)过超过一门课程的教师信息。
+ID、name、dept_name、salary
+> select ID, name, dept_name, salary  
+from instructor  
+where ID in ( select ID  
+　　　　　　from ( select ID, count(course_id) as count_course_id   
+　　　　　　　　　from teaches  
+　　　　　　　　　group by semester, year, ID)as T  
+　　　　　　where T.count_course_id > 1);
+### （2）查询课程表(course)中满足部门(department)预算(budget)超过85000的课程ID(course_id)、课程名(title)、
+部门名称(dept_name)。
+course_id、title、dept_name
+> select course_id, title, dept_name  
+from course natural join department  
+where budget > 85000;
 
+### （3）查询部门表(department)中满足教师(instructor)平均工资(salary)高于80000的部门名称(dept_name)、教学楼(building)。
+dept_name、building
+> select dept_name, building  
+from instructor natural join department  
+group by dept_name  
+having avg(salary) > 80000;
+
+### （4）查询出学生姓名(name)为Tanaka的学生的学生ID(ID)、学生姓名(name)、部门名称(dept_name)、课程ID(course_id)、
+等第(grade)。
+ID、name、dept_name、course_id、grade
+> select ID, name, dept_name, course_id, grade  
+from student natural join takes  
+where name = 'Tanaka';
+
+### （5）查询学生姓名(name)、课程名(title)、等第(grade)，在学生表(student)、选课表(takes)、课程表(course)上，要求没人
+选的课程名也需要输出（外连接）。
+name、title、grade
+> select name, title, grade  
+from course left outer join(select name, course_id, grade  
+　　　　　　　　　　　　from student natural join takes)as T on course.course_id = T.course_id;
+
+### （6）查询教师名(name)、课程名称(title)、学期(semester)、年份(year)，在教师表(instructor)、教师教课表(teaches)、
+课程表(course)上，要求没有教师上的课也需要输出。
+name、title、semester、year
+> select name, title, semester, year  
+from course left outer join(select name, course_id, semester, year  
+　　　　　　　　　　　　from instructor natural join teaches)as T on course.course_id = T.course_id;
+
+### （7）查询只选修了一门课的学生的学生信息。
+ID、name、dept_name、tot_cred
+> select ID, name, dept_name, tot_cred  
+from student natural join takes  
+group by ID  
+having count(course_id) = 1;
+
+### （8）查询学生名、课程名、教学楼、教室、教室大小、学期、年份、等第，在学生表、选课表、教室安排、课程表、教室上。
+name、title、building、room_number、capacity、semester、year、grade
+> select name, title, building, room_number, capacity, semester, year, grade  
+from student natural join takes natural join section natural join course natural join classroom;
+
+
+### （9）查询选修了由‘Crick’老师教学的某一门课程的学生姓名（name）。
+name
+> select distinct S.name  
+from ( select course_id  
+　　　from instructor natural join teaches  
+　　　where instructor.`name`='Crick')as T natural join (select name, course_id  
+　　　　　　　　　　　　　　　　　　　　　　　　from takes natural join student) as S;
 
 
 
